@@ -77,9 +77,9 @@ if [[ "${SMOKE_SSL:-0}" == "1" ]]; then
   cp "$NGINX_CONF" "$CONF_BACKUP"
 
   sed -i.tmp \
-    -e '/# BEGIN SSL_REDIRECT/,/# END SSL_REDIRECT/ s/^    # //' \
-    -e '/# BEGIN SSL_SERVER/,/# END SSL_SERVER/ s/^    # //' \
-    -e '/# BEGIN HTTP_STANDALONE/,/# END HTTP_STANDALONE/ s/^    /# /' \
+    -e '/# BEGIN SSL_REDIRECT/,/# END SSL_REDIRECT/ { /# /!d; /# [A-Z]/!s/^    # //; }' \
+    -e '/# BEGIN SSL_SERVER/,/# END SSL_SERVER/ { /# /!d; /# [A-Z]/!s/^    # //; }' \
+    -e '/# BEGIN HTTP_STANDALONE/,/# END HTTP_STANDALONE/ { /# [A-Z]/!s/^    /    # /; }' \
     "$NGINX_CONF"
   rm -f "${NGINX_CONF}.tmp"
 
