@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Step-by-step production deployment guide for docker-compose-html on a Linux VPS with Let's Encrypt SSL and security hardening.">
+  <meta name="description" content="Step-by-step production deployment guide for docker-compose-html on a Linux VPS (Ubuntu 24.04 LTS) with Let's Encrypt SSL, automated renewal hooks, and security hardening.">
+  <meta property="og:title" content="VPS Deployment Guide · docker-compose-html">
+  <meta property="og:description" content="Step-by-step production deployment guide for docker-compose-html on a Linux VPS with Let's Encrypt SSL and security hardening.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://github.com/hydrokat/docker-compose-html">
   <title>VPS Deployment Guide · docker-compose-html</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/assets/css/styles.css">
@@ -57,7 +61,7 @@
           <li><a href="#deploy" class="toc-link">4. Deploy Repository</a></li>
           <li><a href="#https" class="toc-link">5. Production HTTPS</a></li>
           <li><a href="#renewal" class="toc-link">6. Automated Renewal</a></li>
-          <li><a href="#updates" class="toc-link">7. Zero-Downtime Updates</a></li>
+          <li><a href="#updates" class="toc-link">7. Updates &amp; Rollbacks</a></li>
           <li><a href="#operations" class="toc-link">8. Server Maintenance</a></li>
           <li><a href="#checklist" class="toc-link">9. Security Checklist</a></li>
         </ul>
@@ -67,115 +71,330 @@
     <main id="main-content" class="docs-content">
       <h1>VPS Deployment Guide</h1>
       <p class="docs-lead">
-        A complete walkthrough for deploying a live, production-grade static website to any Linux VPS provider (Hetzner, DigitalOcean, Linode, AWS Lightsail) running Ubuntu 24.04 LTS.
+        A step-by-step production deployment guide for launching static websites with <code>docker-compose-html</code> on any cloud VPS (DigitalOcean, Hetzner, Linode, Vultr, AWS Lightsail) running <strong>Ubuntu 24.04 LTS</strong>.
       </p>
 
       <div class="callout callout--info">
-        <div class="callout-header">Standard Production Baseline</div>
-        <p>This guide assumes Ubuntu 24.04 LTS, domain <code>example.com</code>, and official Docker Engine repositories.</p>
+        <div class="callout-header">Standard Assumptions</div>
+        <p>
+          This guide assumes an Ubuntu 24.04 LTS instance, your domain is <code>example.com</code>, and you have root SSH access to begin. Replace <code>example.com</code> with your registered domain.
+        </p>
       </div>
 
       <section id="dns">
         <h2>1. DNS &amp; Domain Setup</h2>
-        <p>Point your domain's <code>A</code> (and optional <code>AAAA</code>) records to your server's public IP address:</p>
+        <p>
+          Before configuring certificates, configure your domain's DNS records at your registrar or DNS host (Cloudflare, Namecheap, Route53):
+        </p>
+        <ul>
+          <li><strong>A record:</strong> <code>example.com</code> → <code>YOUR_VPS_IP_ADDRESS</code></li>
+          <li><strong>A record (or CNAME):</strong> <code>www.example.com</code> → <code>YOUR_VPS_IP_ADDRESS</code> (or <code>example.com</code>)</li>
+        </ul>
+        <p>Verify global DNS propagation from your local terminal before proceeding:</p>
         <div class="code-card">
           <div class="code-header">
             <span class="code-title">Terminal</span>
-            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+            <button type="button" class="copy-btn" aria-label="Copy dig command">Copy</button>
           </div>
-          <pre><code># Verify DNS resolution before proceeding
-dig +short example.com</code></pre>
+          <pre><code># Check that the returned IP matches your server
+dig +short example.com
+dig +short www.example.com</code></pre>
         </div>
       </section>
 
       <section id="harden">
         <h2>2. Server Hardening</h2>
-        <p>Configure a non-root sudo user, SSH key authentication, and the UFW firewall:</p>
+        <p>Connect to your new VPS and establish a secure baseline with a non-root administrative user and firewall:</p>
+
+        <h3>Create a Dedicated Sudo User</h3>
         <div class="code-card">
           <div class="code-header">
             <span class="code-title">Terminal</span>
-            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+            <button type="button" class="copy-btn" aria-label="Copy user creation">Copy</button>
+          </div>
+          <pre><code># Add a non-root deployer user
+adduser deployer
+usermod -aG sudo deployer
+
+# Copy SSH keys to the new user
+mkdir -p /home/deployer/.ssh
+cp /root/.ssh/authorized_keys /home/deployer/.ssh/
+chown -R deployer:deployer /home/deployer/.ssh
+chmod 700 /home/deployer/.ssh
+chmod 600 /home/deployer/.ssh/authorized_keys</code></pre>
+        </div>
+
+        <h3>Harden SSH Configuration</h3>
+        <p>Disable remote root login and password authentication in <code>/etc/ssh/sshd_config.d/99-hardened.conf</code>:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy sshd hardening">Copy</button>
+          </div>
+          <pre><code>sudo tee /etc/ssh/sshd_config.d/99-hardened.conf &lt;&lt; 'EOF'
+PermitRootLogin no
+PasswordAuthentication no
+PubkeyAuthentication yes
+X11Forwarding no
+EOF
+
+sudo systemctl restart ssh</code></pre>
+        </div>
+
+        <h3>Configure UFW Firewall</h3>
+        <p>Allow only SSH, HTTP, and HTTPS traffic:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy firewall commands">Copy</button>
           </div>
           <pre><code>sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw allow OpenSSH
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
-sudo ufw enable</code></pre>
+sudo ufw --force enable
+sudo ufw status verbose</code></pre>
         </div>
       </section>
 
       <section id="docker">
         <h2>3. Install Docker Engine &amp; Compose</h2>
-        <p>Install the official Docker repository packages:</p>
+        <p>Install the official Docker Engine and Docker Compose v2 plugin from the official Docker apt repository:</p>
         <div class="code-card">
           <div class="code-header">
             <span class="code-title">Terminal</span>
-            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+            <button type="button" class="copy-btn" aria-label="Copy docker installation">Copy</button>
           </div>
-          <pre><code>sudo apt-get update
+          <pre><code># Update package list and install prerequisites
+sudo apt-get update
 sudo apt-get install -y ca-certificates curl gnupg
-# Add Docker's official GPG key and repository
+
+# Add Docker's official GPG signing key
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Set up the stable repository
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release &amp;&amp; echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install Docker Engine and plugins
 sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin</code></pre>
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Enable and start Docker service
+sudo systemctl enable --now docker
+
+# Optional: Add deployer user to docker group (grants root-equivalent Docker control)
+sudo usermod -aG docker deployer</code></pre>
         </div>
       </section>
 
       <section id="deploy">
         <h2>4. Deploy Repository</h2>
-        <p>Clone the website codebase to <code>/opt/site</code>:</p>
+        <p>Deploy the website codebase to <code>/opt/site</code>:</p>
         <div class="code-card">
           <div class="code-header">
             <span class="code-title">Terminal</span>
-            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+            <button type="button" class="copy-btn" aria-label="Copy repository clone">Copy</button>
           </div>
-          <pre><code>sudo git clone git@github.com:hydrokat/docker-compose-html.git /opt/site
+          <pre><code># Create target directory with correct ownership
+sudo mkdir -p /opt/site
+sudo chown deployer:deployer /opt/site
+
+# Clone repository
+git clone git@github.com:hydrokat/docker-compose-html.git /opt/site
 cd /opt/site
-sudo docker compose up -d --build</code></pre>
+
+# Start HTTP web container
+docker compose up -d --build</code></pre>
         </div>
+        <p>Verify by visiting <code>http://example.com</code> in your browser. Nginx should serve the site over HTTP.</p>
       </section>
 
       <section id="https">
         <h2>5. Production HTTPS with Let's Encrypt</h2>
-        <p>Obtain certificates via standalone Certbot, copy to the build context, and rebuild:</p>
+        <p>Secure your website with a free, trusted SSL/TLS certificate from Let's Encrypt.</p>
+
+        <h3>Install Certbot</h3>
         <div class="code-card">
           <div class="code-header">
             <span class="code-title">Terminal</span>
-            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+            <button type="button" class="copy-btn" aria-label="Copy certbot install">Copy</button>
           </div>
-          <pre><code># Temporarily stop web container to release port 80 for ACME challenge
-sudo docker compose down
-sudo certbot certonly --standalone -d example.com -d www.example.com
+          <pre><code>sudo apt-get install -y certbot</code></pre>
+        </div>
 
-# Copy certificates into project
-sudo cp /etc/letsencrypt/live/example.com/fullchain.pem docker/nginx/certs/
-sudo cp /etc/letsencrypt/live/example.com/privkey.pem docker/nginx/certs/
-sudo chmod 600 docker/nginx/certs/privkey.pem</code></pre>
+        <h3>Obtain Certificate via Standalone ACME</h3>
+        <p>Temporarily shut down the Nginx container so Certbot can bind to port 80 to complete the HTTP-01 challenge:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy certbot request">Copy</button>
+          </div>
+          <pre><code>cd /opt/site
+docker compose down
+
+sudo certbot certonly --standalone \
+  -d example.com \
+  -d www.example.com \
+  --agree-tos \
+  --email admin@example.com \
+  --non-interactive</code></pre>
+        </div>
+
+        <h3>Copy Certificates to Build Context</h3>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy cert copy commands">Copy</button>
+          </div>
+          <pre><code># Copy issued certificates into docker/nginx/certs/
+sudo cp /etc/letsencrypt/live/example.com/fullchain.pem /opt/site/docker/nginx/certs/
+sudo cp /etc/letsencrypt/live/example.com/privkey.pem /opt/site/docker/nginx/certs/
+
+# Restrict permissions
+sudo chown deployer:deployer /opt/site/docker/nginx/certs/*.pem
+chmod 644 /opt/site/docker/nginx/certs/fullchain.pem
+chmod 600 /opt/site/docker/nginx/certs/privkey.pem</code></pre>
+        </div>
+
+        <h3>Enable SSL in <code>docker/nginx/nginx.conf</code></h3>
+        <ol>
+          <li>Open <code>docker/nginx/nginx.conf</code>.</li>
+          <li>Comment out the <code># BEGIN HTTP_STANDALONE</code> server block.</li>
+          <li>Uncomment the <code># BEGIN SSL_REDIRECT</code> block and set <code>server_name example.com www.example.com;</code>.</li>
+          <li>Uncomment the <code># BEGIN SSL_SERVER</code> block and set <code>server_name example.com www.example.com;</code>.</li>
+        </ol>
+
+        <h3>Rebuild &amp; Launch HTTPS</h3>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy rebuild command">Copy</button>
+          </div>
+          <pre><code>docker compose up -d --build
+curl -fsS https://example.com/</code></pre>
         </div>
       </section>
 
       <section id="renewal">
         <h2>6. Automated Certificate Renewal</h2>
-        <p>Configure Certbot renewal hooks to rebuild the container automatically when certificates refresh.</p>
+        <p>
+          Because static files and certificates are baked directly into the Docker image, renewing certificates requires:
+        </p>
+        <ol>
+          <li>Stopping Nginx to release port 80 during renewal.</li>
+          <li>Renewing the certificate with Certbot.</li>
+          <li>Copying the new <code>.pem</code> files into <code>docker/nginx/certs/</code>.</li>
+          <li>Rebuilding and restarting the Docker container.</li>
+        </ol>
+
+        <p>Create a dedicated renewal deploy hook script at <code>/etc/letsencrypt/renewal-hooks/deploy/update-site.sh</code>:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">/etc/letsencrypt/renewal-hooks/deploy/update-site.sh</span>
+            <button type="button" class="copy-btn" aria-label="Copy renewal hook script">Copy</button>
+          </div>
+          <pre><code>#!/usr/bin/env bash
+set -euo pipefail
+
+SITE_DIR="/opt/site"
+DOMAIN="example.com"
+
+echo "==> Deploying renewed certificates for $DOMAIN"
+cp "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" "$SITE_DIR/docker/nginx/certs/"
+cp "/etc/letsencrypt/live/$DOMAIN/privkey.pem" "$SITE_DIR/docker/nginx/certs/"
+chmod 644 "$SITE_DIR/docker/nginx/certs/fullchain.pem"
+chmod 600 "$SITE_DIR/docker/nginx/certs/privkey.pem"
+
+echo "==> Rebuilding Docker container with fresh certificate"
+docker compose -f "$SITE_DIR/docker-compose.yaml" up -d --build</code></pre>
+        </div>
+
+        <p>Make the script executable and test the renewal pipeline with a dry run:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy dry run command">Copy</button>
+          </div>
+          <pre><code>sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/update-site.sh
+
+# Run dry run with pre-hook to stop docker during port 80 challenge
+sudo certbot renew --dry-run --pre-hook "docker compose -f /opt/site/docker-compose.yaml down"</code></pre>
+        </div>
+        <p>Certbot's built-in systemd timer (<code>systemctl status certbot.timer</code>) will now run automatically twice daily.</p>
       </section>
 
       <section id="updates">
         <h2>7. Zero-Downtime Updates &amp; Rollbacks</h2>
-        <p>How to pull updates, rebuild the immutable image, and rollback to prior commits if needed.</p>
+        <p>Deploying website updates or rolling back is fast and deterministic:</p>
+
+        <h3>Deploying Changes</h3>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy update commands">Copy</button>
+          </div>
+          <pre><code>cd /opt/site
+git pull origin trunk
+docker compose up -d --build</code></pre>
+        </div>
+
+        <h3>Rolling Back to a Previous Version</h3>
+        <p>If an update causes an issue, roll back instantly using git commit history:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy rollback command">Copy</button>
+          </div>
+          <pre><code>cd /opt/site
+git checkout &lt;PREVIOUS_COMMIT_SHA&gt;
+docker compose up -d --build</code></pre>
+        </div>
       </section>
 
       <section id="operations">
         <h2>8. Server Maintenance &amp; Operations</h2>
-        <p>Logging, Docker auto-restart policies, disk cleanup, and backup practices.</p>
+        <h3>Automatic Service Restarts</h3>
+        <p>
+          The compose definition includes <code>restart: unless-stopped</code>. If the VPS reboots (e.g., after kernel security patches), systemd automatically brings Docker and your website container back online.
+        </p>
+
+        <h3>Cleaning Unused Docker Images</h3>
+        <p>As you rebuild images with content updates, remove dangling image layers to conserve disk space:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy prune command">Copy</button>
+          </div>
+          <pre><code># Remove dangling unused images
+docker image prune -f</code></pre>
+        </div>
+
+        <h3>Backup Strategy</h3>
+        <p>
+          Because static HTML and server configuration live in Git, your codebase is already version-controlled. Only back up:
+        </p>
+        <ul>
+          <li>Let's Encrypt directory: <code>/etc/letsencrypt</code></li>
+          <li>Server configuration: <code>/etc/ssh</code>, <code>/etc/ufw</code></li>
+        </ul>
       </section>
 
       <section id="checklist">
         <h2>9. Production Security Checklist</h2>
-        <p>Final security verification before putting the site live to public traffic.</p>
+        <p>Review this checklist before announcing your live website:</p>
+        <ul>
+          <li>&#9745; SSH key authentication active; root and password SSH disabled.</li>
+          <li>&#9745; UFW firewall active, allowing only ports 22, 80, and 443.</li>
+          <li>&#9745; Valid SSL certificate installed with automatic HTTP-to-HTTPS 301 redirect.</li>
+          <li>&#9745; <code>server_tokens off</code> enabled in Nginx (hides Nginx version).</li>
+          <li>&#9745; Hardened HTTP security headers (<code>X-Content-Type-Options</code>, <code>X-Frame-Options</code>, <code>Referrer-Policy</code>, <code>Content-Security-Policy</code>) active.</li>
+          <li>&#9745; Private keys in <code>docker/nginx/certs/</code> are gitignored and never committed.</li>
+          <li>&#9745; Built Docker images containing private keys are never pushed to public registries.</li>
+          <li>&#9745; Certbot renewal hook dry-run validated.</li>
+        </ul>
       </section>
 
       <nav class="docs-nav-pager" aria-label="Page navigation">

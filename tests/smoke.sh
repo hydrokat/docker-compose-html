@@ -53,9 +53,18 @@ if ! echo "$INDEX_RESPONSE" | grep -q "docker-compose-html"; then
   exit 1
 fi
 
-echo "==> Testing website multi-page endpoints"
-curl -fsS http://localhost/usage.html >/dev/null
-curl -fsS http://localhost/deploy.html >/dev/null
+echo "==> Testing website multi-page endpoints and content markers"
+USAGE_RESPONSE="$(curl -fsS http://localhost/usage.html)"
+if ! echo "$USAGE_RESPONSE" | grep -q 'id="quick-start"'; then
+  echo "FAIL: Expected id=\"quick-start\" marker not found in usage.html"
+  exit 1
+fi
+
+DEPLOY_RESPONSE="$(curl -fsS http://localhost/deploy.html)"
+if ! echo "$DEPLOY_RESPONSE" | grep -q 'id="renewal"'; then
+  echo "FAIL: Expected id=\"renewal\" marker not found in deploy.html"
+  exit 1
+fi
 
 echo "==> Testing asset serving and MIME types"
 CSS_HEADERS="$(curl -sI http://localhost/assets/css/styles.css)"

@@ -4,7 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="docker-compose-html">
-  <meta name="description" content="Production-ready static HTML server with Nginx and Docker Compose. Single command deployment, immutable images, and optional SSL.">
+  <meta name="description" content="Production-ready Nginx static HTML server orchestrated by Docker Compose. Single-command startup, immutable image architecture, hardened security headers, and optional SSL.">
+  <meta property="og:title" content="docker-compose-html · Nginx Static Site Architecture">
+  <meta property="og:description" content="Production-ready static HTML server with Nginx and Docker Compose. Single command deployment, immutable images, and optional SSL.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://github.com/hydrokat/docker-compose-html">
   <title>docker-compose-html · Nginx Static Site Architecture</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/assets/css/styles.css">
@@ -94,7 +98,7 @@
     <section class="section">
       <div class="container">
         <h2 class="section-title">Architectural Principles</h2>
-        <p class="section-subtitle">Engineered for deterministic static website hosting with zero operational overhead.</p>
+        <p class="section-subtitle">Engineered for deterministic static website hosting with zero operational drift.</p>
 
         <div class="features-grid">
           <article class="feature-card">
@@ -105,7 +109,7 @@
               </svg>
             </div>
             <h3 class="feature-title">One-Command Run</h3>
-            <p class="feature-desc">Single <code>docker compose up</code> spins up a fully isolated, production-grade Nginx web container ready for traffic.</p>
+            <p class="feature-desc">Single <code>docker compose up</code> builds and starts a fully isolated Nginx container ready to serve incoming traffic.</p>
           </article>
 
           <article class="feature-card">
@@ -115,7 +119,7 @@
               </svg>
             </div>
             <h3 class="feature-title">Immutable Images</h3>
-            <p class="feature-desc">No bind mounts or volume drift. Content is baked directly into the image at build time for strict environment parity.</p>
+            <p class="feature-desc">No bind mounts or volume drift. Content and configuration are baked directly into the Docker image at build time.</p>
           </article>
 
           <article class="feature-card">
@@ -126,7 +130,7 @@
               </svg>
             </div>
             <h3 class="feature-title">SSL / TLS Ready</h3>
-            <p class="feature-desc">Toggle HTTPS on demand with pre-configured TLS 1.2/1.3, HTTP/2, 301 redirects, and opt-in HSTS hardening.</p>
+            <p class="feature-desc">Turn on HTTPS effortlessly with modern TLS 1.2/1.3 ciphers, HTTP/2, automatic 301 redirects, and opt-in HSTS.</p>
           </article>
 
           <article class="feature-card">
@@ -139,7 +143,7 @@
               </svg>
             </div>
             <h3 class="feature-title">VPS Optimized</h3>
-            <p class="feature-desc">Designed to run cleanly on low-cost virtual private servers (Ubuntu, Debian) with minimal resource consumption.</p>
+            <p class="feature-desc">Engineered to run reliably on any Linux VPS (Ubuntu, Debian) with minimal memory footprint and zero external dependencies.</p>
           </article>
         </div>
       </div>
@@ -148,13 +152,13 @@
     <section class="section" style="background-color: var(--color-surface); border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border);">
       <div class="container">
         <h2 class="section-title">How It Works</h2>
-        <p class="section-subtitle">Three straightforward steps to build and host your web application.</p>
+        <p class="section-subtitle">Three straightforward steps from local development to production serving.</p>
 
         <ol class="steps-list">
           <li class="step-item">
             <span class="step-num">1</span>
             <h3 class="step-title">Clone the Repository</h3>
-            <p class="step-desc">Pull the repository onto your local workstation or production Linux VPS server.</p>
+            <p class="step-desc">Pull the repository onto your workstation or remote Linux VPS server.</p>
           </li>
           <li class="step-item">
             <span class="step-num">2</span>
@@ -168,9 +172,36 @@
           </li>
         </ol>
 
+        <div style="margin-top: 3rem;">
+          <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Repository Layout</h3>
+          <div class="code-card">
+            <div class="code-header">
+              <span class="code-title">File Structure</span>
+              <button type="button" class="copy-btn" aria-label="Copy file tree">Copy</button>
+            </div>
+            <pre><code>docker-compose-html/
+├── docker-compose.yaml        # Service definition (ports 80 &amp; 443, no volumes)
+├── README.md                  # Comprehensive documentation
+├── docker/
+│   └── nginx/
+│       ├── Dockerfile         # Pinned nginx:1.27-alpine base
+│       ├── nginx.conf         # Hardened Nginx configuration with SSL blocks
+│       └── certs/
+│           └── .gitkeep       # Destination for SSL certificates
+├── tests/
+│   └── smoke.sh               # Test suite for HTTP and SSL validation
+└── www/                       # Static web root (HTML, CSS, JS, assets)
+    ├── index.html
+    ├── usage.html
+    ├── deploy.html
+    ├── 404.html
+    └── assets/</code></pre>
+          </div>
+        </div>
+
         <div class="cta-band">
           <div>
-            <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.25rem;">Ready to launch your live site?</h3>
+            <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.25rem;">Ready to deploy your live website?</h3>
             <p style="color: var(--color-text-muted);">Follow our step-by-step guide to provisioning a VPS, configuring Let's Encrypt, and deploying live.</p>
           </div>
           <a href="/deploy.html" class="btn btn-primary" style="white-space: nowrap;">Read VPS Deployment Guide →</a>

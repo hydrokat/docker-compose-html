@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Comprehensive usage guide for docker-compose-html: quick start, content updates, ports, SSL, and troubleshooting.">
+  <meta name="description" content="Complete operational guide for docker-compose-html: quick start, content workflows, port remapping, local SSL setup, test execution, and troubleshooting.">
+  <meta property="og:title" content="Usage Guide · docker-compose-html">
+  <meta property="og:description" content="Comprehensive usage guide for docker-compose-html: quick start, content updates, ports, SSL, and troubleshooting.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://github.com/hydrokat/docker-compose-html">
   <title>Usage Guide · docker-compose-html</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="stylesheet" href="/assets/css/styles.css">
@@ -65,20 +69,20 @@
     <main id="main-content" class="docs-content">
       <h1>Usage Guide</h1>
       <p class="docs-lead">
-        Everything you need to know about developing, modifying, testing, and managing static websites with <code>docker-compose-html</code>.
+        Learn how to develop, test, configure, and maintain static websites using the <code>docker-compose-html</code> architecture.
       </p>
 
       <section id="prerequisites">
         <h2>Prerequisites</h2>
-        <p>Before running the project, ensure you have the following installed on your machine:</p>
+        <p>Before launching the web service, confirm that your system has the following tools installed:</p>
         <ul>
-          <li><strong>Docker Engine</strong> (v20.10 or higher)</li>
-          <li><strong>Docker Compose v2</strong> plugin (<code>docker compose</code>)</li>
+          <li><strong>Docker Engine</strong> (v20.10+): The core container runtime.</li>
+          <li><strong>Docker Compose</strong> (v2 plugin): The modern CLI plugin invoked via <code>docker compose</code>.</li>
         </ul>
         <div class="code-card">
           <div class="code-header">
             <span class="code-title">Terminal</span>
-            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+            <button type="button" class="copy-btn" aria-label="Copy version check">Copy</button>
           </div>
           <pre><code>docker compose version</code></pre>
         </div>
@@ -86,90 +90,185 @@
 
       <section id="quick-start">
         <h2>Quick Start</h2>
-        <p>Start serving static HTML with a single command:</p>
+        <p>Spin up the Nginx web container with your static website files in seconds:</p>
         <div class="code-card">
           <div class="code-header">
             <span class="code-title">Terminal</span>
-            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+            <button type="button" class="copy-btn" aria-label="Copy startup commands">Copy</button>
           </div>
-          <pre><code>git clone git@github.com:hydrokat/docker-compose-html.git
+          <pre><code># 1. Clone the project repository
+git clone git@github.com:hydrokat/docker-compose-html.git
 cd docker-compose-html
-docker compose up -d --build</code></pre>
+
+# 2. Build image and start in background
+docker compose up -d --build
+
+# 3. Check container status
+docker compose ps</code></pre>
         </div>
-        <p>Navigate to <a href="http://localhost">http://localhost</a> in your web browser.</p>
+        <p>
+          Open <a href="http://localhost">http://localhost</a> in your web browser. You will see the live website served by Nginx.
+        </p>
+
+        <h3>Stopping the Container</h3>
+        <p>To stop the container gracefully:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy stop command">Copy</button>
+          </div>
+          <pre><code>docker compose down</code></pre>
+        </div>
       </section>
 
       <section id="updating-content">
         <h2>Updating Content</h2>
         <p>
-          Because static files are baked directly into the Docker image, changes in <code>www/</code> require a rebuild to take effect:
+          This repository enforces an <strong>immutable image design</strong>. Rather than binding a host folder into the container using volumes, static assets are copied directly into the Docker image at build time (<code>COPY www/ /usr/share/nginx/html/</code>).
         </p>
+        <p>To update the site:</p>
+        <ol>
+          <li>Edit, add, or delete files inside the <code>www/</code> directory.</li>
+          <li>Rebuild and restart the container:</li>
+        </ol>
         <div class="code-card">
           <div class="code-header">
             <span class="code-title">Terminal</span>
-            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+            <button type="button" class="copy-btn" aria-label="Copy rebuild command">Copy</button>
           </div>
           <pre><code>docker compose up -d --build</code></pre>
         </div>
         <div class="callout callout--info">
-          <div class="callout-header">Immutable Image Architecture</div>
-          <p>By avoiding host volume mounts, your containerized site runs identically in development and production.</p>
+          <div class="callout-header">Why No Volumes?</div>
+          <p>
+            Eliminating host volume mounts prevents permission mismatches between host users and the container's <code>nginx</code> user, eliminates file drift across environments, and guarantees that what you test locally is identical to production.
+          </p>
         </div>
       </section>
 
       <section id="ports">
         <h2>Port Configuration</h2>
-        <p>By default, host ports <code>80</code> and <code>443</code> are published. If you encounter port conflicts, you can edit <code>docker-compose.yaml</code> to map alternative host ports:</p>
+        <p>
+          The default <code>docker-compose.yaml</code> maps host ports <code>80</code> and <code>443</code> to container ports <code>80</code> and <code>443</code>.
+        </p>
+        <p>
+          If your development machine already runs a web server (like Apache, Caddy, or another Docker container), you can remap host ports in <code>docker-compose.yaml</code>:
+        </p>
         <div class="code-card">
           <div class="code-header">
             <span class="code-title">docker-compose.yaml</span>
-            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+            <button type="button" class="copy-btn" aria-label="Copy port remapping">Copy</button>
           </div>
-          <pre><code>ports:
-  - "8080:80"
-  - "8443:443"</code></pre>
+          <pre><code>services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    ports:
+      - "8080:80"    # Access via http://localhost:8080
+      - "8443:443"   # Access via https://localhost:8443
+    restart: unless-stopped</code></pre>
         </div>
+        <p>After editing the compose file, restart with <code>docker compose up -d</code>.</p>
       </section>
 
       <section id="local-ssl">
         <h2>Enabling Local SSL</h2>
-        <p>To enable HTTPS for local development:</p>
+        <p>
+          SSL/TLS is optional and can be activated directly by editing <code>docker/nginx/nginx.conf</code>.
+        </p>
+
+        <h3>Step 1: Generate a Local Certificate</h3>
+        <p>Generate a local self-signed certificate using <code>openssl</code> into <code>docker/nginx/certs/</code>:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy cert generation">Copy</button>
+          </div>
+          <pre><code>openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout docker/nginx/certs/privkey.pem \
+  -out docker/nginx/certs/fullchain.pem \
+  -subj "/CN=localhost"</code></pre>
+        </div>
+
+        <h3>Step 2: Edit <code>docker/nginx/nginx.conf</code></h3>
         <ol>
-          <li>Generate a self-signed certificate into <code>docker/nginx/certs/</code>.</li>
-          <li>Uncomment the SSL server and redirect blocks in <code>docker/nginx/nginx.conf</code>.</li>
-          <li>Comment out the standalone HTTP server block.</li>
-          <li>Rebuild: <code>docker compose up -d --build</code>.</li>
+          <li>Comment out the <code># BEGIN HTTP_STANDALONE</code> block.</li>
+          <li>Uncomment the <code># BEGIN SSL_REDIRECT</code> block (redirects port 80 to 443).</li>
+          <li>Uncomment the <code># BEGIN SSL_SERVER</code> block (listens on 443 with SSL).</li>
         </ol>
+
+        <h3>Step 3: Rebuild and Verify</h3>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy rebuild command">Copy</button>
+          </div>
+          <pre><code>docker compose up -d --build
+curl -kfsS https://localhost/</code></pre>
+        </div>
+
         <div class="callout callout--warn">
-          <div class="callout-header">Private Key Security</div>
-          <p>Certificates are built into the image. Never push images with private keys to public registries.</p>
+          <div class="callout-header">Private Key Security Warning</div>
+          <p>
+            Because there are no volumes, certificate files in <code>docker/nginx/certs/</code> are copied into the Docker image at build time. Private keys must never be committed to Git (they are gitignored) and images containing keys must never be pushed to public image registries.
+          </p>
         </div>
       </section>
 
       <section id="testing">
         <h2>Testing &amp; Verification</h2>
-        <p>Run the automated test suite to verify configuration, endpoint responses, and optional SSL:</p>
+        <p>
+          An automated smoke testing script is provided in <code>tests/smoke.sh</code>. It performs end-to-end verification of compose syntax, container boot, Nginx configuration syntax, HTTP serving, 404 error handling, and optional SSL.
+        </p>
         <div class="code-card">
           <div class="code-header">
             <span class="code-title">Terminal</span>
-            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+            <button type="button" class="copy-btn" aria-label="Copy test commands">Copy</button>
           </div>
-          <pre><code># Run HTTP smoke tests
+          <pre><code># Test HTTP standalone mode
 ./tests/smoke.sh
 
-# Run SSL smoke tests
+# Test full SSL lifecycle (generates cert, validates HTTPS &amp; 301, tears down)
 SMOKE_SSL=1 ./tests/smoke.sh</code></pre>
         </div>
       </section>
 
       <section id="troubleshooting">
         <h2>Troubleshooting</h2>
-        <p>Common operational issues and how to resolve them:</p>
-        <ul>
-          <li><strong>Port 80/443 already allocated:</strong> Check existing services with <code>docker ps</code> or <code>lsof -i :80</code>.</li>
-          <li><strong>Nginx syntax errors:</strong> Run <code>docker compose exec web nginx -t</code> to validate your configuration.</li>
-          <li><strong>View container logs:</strong> Run <code>docker compose logs -f web</code>.</li>
-        </ul>
+        <h3>Port Already Allocated</h3>
+        <p>
+          If you see <code>Bind for 0.0.0.0:80 failed: port is already allocated</code>, find the process holding the port:
+        </p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy lsof command">Copy</button>
+          </div>
+          <pre><code>lsof -i :80
+docker ps</code></pre>
+        </div>
+        <p>Either stop the conflicting service or remap the host port in <code>docker-compose.yaml</code>.</p>
+
+        <h3>Verifying Nginx Configuration Inside Container</h3>
+        <p>If the container fails to start or restarts unexpectedly, test the Nginx configuration syntax:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy nginx syntax check">Copy</button>
+          </div>
+          <pre><code>docker compose exec web nginx -t</code></pre>
+        </div>
+
+        <h3>Inspecting Container Logs</h3>
+        <p>Follow live server access and error logs:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy logs command">Copy</button>
+          </div>
+          <pre><code>docker compose logs -f web</code></pre>
+        </div>
       </section>
 
       <nav class="docs-nav-pager" aria-label="Page navigation">
