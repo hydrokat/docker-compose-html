@@ -121,7 +121,8 @@ if [[ "${SMOKE_SSL:-0}" == "1" ]]; then
     "$NGINX_CONF"
   rm -f "${NGINX_CONF}.tmp"
 
-  docker compose up -d --build
+  docker compose down
+  docker compose up -d --build --force-recreate
 
   docker compose exec -T web nginx -t
 
