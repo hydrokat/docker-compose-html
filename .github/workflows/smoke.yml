@@ -1,0 +1,23 @@
+name: Smoke Tests
+
+on:
+  push:
+    branches: [trunk]
+  pull_request:
+    branches: [trunk]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run HTTP smoke tests
+        run: |
+          chmod +x tests/smoke.sh
+          ./tests/smoke.sh
+
+      - name: Run SSL smoke tests
+        run: |
+          SMOKE_SSL=1 ./tests/smoke.sh
