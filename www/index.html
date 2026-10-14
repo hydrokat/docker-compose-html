@@ -4,12 +4,194 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="docker-compose-html">
-  <title>docker-compose-html</title>
+  <meta name="description" content="Production-ready static HTML server with Nginx and Docker Compose. Single command deployment, immutable images, and optional SSL.">
+  <title>docker-compose-html · Nginx Static Site Architecture</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/css/styles.css">
 </head>
 <body>
-  <main>
-    <h1>docker-compose-html</h1>
-    <p>Nginx serving static HTML via Docker Compose.</p>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div id="aria-status" class="sr-only" aria-live="polite"></div>
+
+  <header class="site-header">
+    <div class="container">
+      <a href="/" class="brand" aria-label="docker-compose-html homepage">
+        <img src="/assets/img/logo.svg" alt="" class="brand-logo" width="32" height="32">
+        <span>docker-compose-html</span>
+      </a>
+
+      <button type="button" class="nav-toggle" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+
+      <ul id="nav-menu" class="nav-menu" aria-expanded="false">
+        <li><a href="/" class="nav-link" aria-current="page">Home</a></li>
+        <li><a href="/usage.html" class="nav-link">Usage</a></li>
+        <li><a href="/deploy.html" class="nav-link">Deploy</a></li>
+        <li>
+          <a href="https://github.com/hydrokat/docker-compose-html" class="nav-link nav-external" target="_blank" rel="noopener noreferrer">
+            GitHub
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+            <span class="sr-only">(opens GitHub repository in a new window)</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <div class="badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+            Production Infrastructure
+          </div>
+          <h1 class="hero-title">
+            Static sites, shipped in <span class="hero-title-accent">one command</span>.
+          </h1>
+          <p class="hero-subtitle">
+            A production-ready Nginx static HTML server orchestrated by Docker Compose. Pure immutable images, hardened security headers, no volumes, and optional SSL.
+          </p>
+          <div class="hero-actions">
+            <a href="/usage.html" class="btn btn-primary">
+              Get Started
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </a>
+            <a href="/deploy.html" class="btn btn-secondary">Deploy to VPS</a>
+          </div>
+        </div>
+
+        <div>
+          <div class="code-card">
+            <div class="code-header">
+              <span class="code-title">Terminal</span>
+              <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+            </div>
+            <pre><code><span style="color: #38bdf8;">$</span> git clone git@github.com:hydrokat/docker-compose-html.git
+<span style="color: #38bdf8;">$</span> cd docker-compose-html
+<span style="color: #38bdf8;">$</span> docker compose up -d --build
+<span style="color: #34d399;">✔ Container docker-compose-html-web Started [0.2s]</span>
+<span style="color: #94a3b8;">→ Open http://localhost</span></code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2 class="section-title">Architectural Principles</h2>
+        <p class="section-subtitle">Engineered for deterministic static website hosting with zero operational overhead.</p>
+
+        <div class="features-grid">
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+            </div>
+            <h3 class="feature-title">One-Command Run</h3>
+            <p class="feature-desc">Single <code>docker compose up</code> spins up a fully isolated, production-grade Nginx web container ready for traffic.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              </svg>
+            </div>
+            <h3 class="feature-title">Immutable Images</h3>
+            <p class="feature-desc">No bind mounts or volume drift. Content is baked directly into the image at build time for strict environment parity.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <h3 class="feature-title">SSL / TLS Ready</h3>
+            <p class="feature-desc">Toggle HTTPS on demand with pre-configured TLS 1.2/1.3, HTTP/2, 301 redirects, and opt-in HSTS hardening.</p>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+              </svg>
+            </div>
+            <h3 class="feature-title">VPS Optimized</h3>
+            <p class="feature-desc">Designed to run cleanly on low-cost virtual private servers (Ubuntu, Debian) with minimal resource consumption.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" style="background-color: var(--color-surface); border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border);">
+      <div class="container">
+        <h2 class="section-title">How It Works</h2>
+        <p class="section-subtitle">Three straightforward steps to build and host your web application.</p>
+
+        <ol class="steps-list">
+          <li class="step-item">
+            <span class="step-num">1</span>
+            <h3 class="step-title">Clone the Repository</h3>
+            <p class="step-desc">Pull the repository onto your local workstation or production Linux VPS server.</p>
+          </li>
+          <li class="step-item">
+            <span class="step-num">2</span>
+            <h3 class="step-title">Place Your HTML in <code>www/</code></h3>
+            <p class="step-desc">Drop your static HTML, CSS, client-side JS, images, and fonts directly into the <code>www/</code> directory.</p>
+          </li>
+          <li class="step-item">
+            <span class="step-num">3</span>
+            <h3 class="step-title">Build &amp; Run Container</h3>
+            <p class="step-desc">Execute <code>docker compose up -d --build</code>. Nginx serves your content immediately on ports 80 and 443.</p>
+          </li>
+        </ol>
+
+        <div class="cta-band">
+          <div>
+            <h3 style="font-size: 1.35rem; font-weight: 700; margin-bottom: 0.25rem;">Ready to launch your live site?</h3>
+            <p style="color: var(--color-text-muted);">Follow our step-by-step guide to provisioning a VPS, configuring Let's Encrypt, and deploying live.</p>
+          </div>
+          <a href="/deploy.html" class="btn btn-primary" style="white-space: nowrap;">Read VPS Deployment Guide →</a>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <p>&copy; <span class="current-year">2026</span> docker-compose-html. Released under the MIT License.</p>
+      <p>
+        <a href="https://github.com/hydrokat/docker-compose-html" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+        &middot;
+        <a href="/usage.html">Usage Guide</a>
+        &middot;
+        <a href="/deploy.html">VPS Deployment</a>
+      </p>
+    </div>
+  </footer>
+
+  <script type="module" src="/assets/js/main.js"></script>
 </body>
 </html>

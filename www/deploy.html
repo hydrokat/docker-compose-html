@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Step-by-step production deployment guide for docker-compose-html on a Linux VPS with Let's Encrypt SSL and security hardening.">
+  <title>VPS Deployment Guide · docker-compose-html</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div id="aria-status" class="sr-only" aria-live="polite"></div>
+
+  <header class="site-header">
+    <div class="container">
+      <a href="/" class="brand" aria-label="docker-compose-html homepage">
+        <img src="/assets/img/logo.svg" alt="" class="brand-logo" width="32" height="32">
+        <span>docker-compose-html</span>
+      </a>
+
+      <button type="button" class="nav-toggle" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+
+      <ul id="nav-menu" class="nav-menu" aria-expanded="false">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/usage.html" class="nav-link">Usage</a></li>
+        <li><a href="/deploy.html" class="nav-link" aria-current="page">Deploy</a></li>
+        <li>
+          <a href="https://github.com/hydrokat/docker-compose-html" class="nav-link nav-external" target="_blank" rel="noopener noreferrer">
+            GitHub
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+            <span class="sr-only">(opens GitHub repository in a new window)</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="container docs-layout">
+    <aside class="docs-sidebar">
+      <nav class="toc-card" aria-label="Table of contents">
+        <div class="toc-title">On this page</div>
+        <ul class="toc-list">
+          <li><a href="#dns" class="toc-link">1. DNS &amp; Domain Setup</a></li>
+          <li><a href="#harden" class="toc-link">2. Server Hardening</a></li>
+          <li><a href="#docker" class="toc-link">3. Install Docker</a></li>
+          <li><a href="#deploy" class="toc-link">4. Deploy Repository</a></li>
+          <li><a href="#https" class="toc-link">5. Production HTTPS</a></li>
+          <li><a href="#renewal" class="toc-link">6. Automated Renewal</a></li>
+          <li><a href="#updates" class="toc-link">7. Zero-Downtime Updates</a></li>
+          <li><a href="#operations" class="toc-link">8. Server Maintenance</a></li>
+          <li><a href="#checklist" class="toc-link">9. Security Checklist</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="docs-content">
+      <h1>VPS Deployment Guide</h1>
+      <p class="docs-lead">
+        A complete walkthrough for deploying a live, production-grade static website to any Linux VPS provider (Hetzner, DigitalOcean, Linode, AWS Lightsail) running Ubuntu 24.04 LTS.
+      </p>
+
+      <div class="callout callout--info">
+        <div class="callout-header">Standard Production Baseline</div>
+        <p>This guide assumes Ubuntu 24.04 LTS, domain <code>example.com</code>, and official Docker Engine repositories.</p>
+      </div>
+
+      <section id="dns">
+        <h2>1. DNS &amp; Domain Setup</h2>
+        <p>Point your domain's <code>A</code> (and optional <code>AAAA</code>) records to your server's public IP address:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+          </div>
+          <pre><code># Verify DNS resolution before proceeding
+dig +short example.com</code></pre>
+        </div>
+      </section>
+
+      <section id="harden">
+        <h2>2. Server Hardening</h2>
+        <p>Configure a non-root sudo user, SSH key authentication, and the UFW firewall:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+          </div>
+          <pre><code>sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow OpenSSH
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable</code></pre>
+        </div>
+      </section>
+
+      <section id="docker">
+        <h2>3. Install Docker Engine &amp; Compose</h2>
+        <p>Install the official Docker repository packages:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+          </div>
+          <pre><code>sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg
+# Add Docker's official GPG key and repository
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin</code></pre>
+        </div>
+      </section>
+
+      <section id="deploy">
+        <h2>4. Deploy Repository</h2>
+        <p>Clone the website codebase to <code>/opt/site</code>:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+          </div>
+          <pre><code>sudo git clone git@github.com:hydrokat/docker-compose-html.git /opt/site
+cd /opt/site
+sudo docker compose up -d --build</code></pre>
+        </div>
+      </section>
+
+      <section id="https">
+        <h2>5. Production HTTPS with Let's Encrypt</h2>
+        <p>Obtain certificates via standalone Certbot, copy to the build context, and rebuild:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+          </div>
+          <pre><code># Temporarily stop web container to release port 80 for ACME challenge
+sudo docker compose down
+sudo certbot certonly --standalone -d example.com -d www.example.com
+
+# Copy certificates into project
+sudo cp /etc/letsencrypt/live/example.com/fullchain.pem docker/nginx/certs/
+sudo cp /etc/letsencrypt/live/example.com/privkey.pem docker/nginx/certs/
+sudo chmod 600 docker/nginx/certs/privkey.pem</code></pre>
+        </div>
+      </section>
+
+      <section id="renewal">
+        <h2>6. Automated Certificate Renewal</h2>
+        <p>Configure Certbot renewal hooks to rebuild the container automatically when certificates refresh.</p>
+      </section>
+
+      <section id="updates">
+        <h2>7. Zero-Downtime Updates &amp; Rollbacks</h2>
+        <p>How to pull updates, rebuild the immutable image, and rollback to prior commits if needed.</p>
+      </section>
+
+      <section id="operations">
+        <h2>8. Server Maintenance &amp; Operations</h2>
+        <p>Logging, Docker auto-restart policies, disk cleanup, and backup practices.</p>
+      </section>
+
+      <section id="checklist">
+        <h2>9. Production Security Checklist</h2>
+        <p>Final security verification before putting the site live to public traffic.</p>
+      </section>
+
+      <nav class="docs-nav-pager" aria-label="Page navigation">
+        <a href="/usage.html" class="btn btn-secondary">← Back to Usage</a>
+        <a href="/" class="btn btn-primary">Return to Home →</a>
+      </nav>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <p>&copy; <span class="current-year">2026</span> docker-compose-html. Released under the MIT License.</p>
+      <p>
+        <a href="https://github.com/hydrokat/docker-compose-html" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+        &middot;
+        <a href="/usage.html">Usage Guide</a>
+        &middot;
+        <a href="/deploy.html">VPS Deployment</a>
+      </p>
+    </div>
+  </footer>
+
+  <script type="module" src="/assets/js/main.js"></script>
+</body>
+</html>

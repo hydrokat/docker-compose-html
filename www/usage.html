@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Comprehensive usage guide for docker-compose-html: quick start, content updates, ports, SSL, and troubleshooting.">
+  <title>Usage Guide · docker-compose-html</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div id="aria-status" class="sr-only" aria-live="polite"></div>
+
+  <header class="site-header">
+    <div class="container">
+      <a href="/" class="brand" aria-label="docker-compose-html homepage">
+        <img src="/assets/img/logo.svg" alt="" class="brand-logo" width="32" height="32">
+        <span>docker-compose-html</span>
+      </a>
+
+      <button type="button" class="nav-toggle" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+
+      <ul id="nav-menu" class="nav-menu" aria-expanded="false">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/usage.html" class="nav-link" aria-current="page">Usage</a></li>
+        <li><a href="/deploy.html" class="nav-link">Deploy</a></li>
+        <li>
+          <a href="https://github.com/hydrokat/docker-compose-html" class="nav-link nav-external" target="_blank" rel="noopener noreferrer">
+            GitHub
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+            <span class="sr-only">(opens GitHub repository in a new window)</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </header>
+
+  <div class="container docs-layout">
+    <aside class="docs-sidebar">
+      <nav class="toc-card" aria-label="Table of contents">
+        <div class="toc-title">On this page</div>
+        <ul class="toc-list">
+          <li><a href="#prerequisites" class="toc-link">Prerequisites</a></li>
+          <li><a href="#quick-start" class="toc-link">Quick Start</a></li>
+          <li><a href="#updating-content" class="toc-link">Updating Content</a></li>
+          <li><a href="#ports" class="toc-link">Port Configuration</a></li>
+          <li><a href="#local-ssl" class="toc-link">Enabling Local SSL</a></li>
+          <li><a href="#testing" class="toc-link">Testing &amp; Verification</a></li>
+          <li><a href="#troubleshooting" class="toc-link">Troubleshooting</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main id="main-content" class="docs-content">
+      <h1>Usage Guide</h1>
+      <p class="docs-lead">
+        Everything you need to know about developing, modifying, testing, and managing static websites with <code>docker-compose-html</code>.
+      </p>
+
+      <section id="prerequisites">
+        <h2>Prerequisites</h2>
+        <p>Before running the project, ensure you have the following installed on your machine:</p>
+        <ul>
+          <li><strong>Docker Engine</strong> (v20.10 or higher)</li>
+          <li><strong>Docker Compose v2</strong> plugin (<code>docker compose</code>)</li>
+        </ul>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+          </div>
+          <pre><code>docker compose version</code></pre>
+        </div>
+      </section>
+
+      <section id="quick-start">
+        <h2>Quick Start</h2>
+        <p>Start serving static HTML with a single command:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+          </div>
+          <pre><code>git clone git@github.com:hydrokat/docker-compose-html.git
+cd docker-compose-html
+docker compose up -d --build</code></pre>
+        </div>
+        <p>Navigate to <a href="http://localhost">http://localhost</a> in your web browser.</p>
+      </section>
+
+      <section id="updating-content">
+        <h2>Updating Content</h2>
+        <p>
+          Because static files are baked directly into the Docker image, changes in <code>www/</code> require a rebuild to take effect:
+        </p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+          </div>
+          <pre><code>docker compose up -d --build</code></pre>
+        </div>
+        <div class="callout callout--info">
+          <div class="callout-header">Immutable Image Architecture</div>
+          <p>By avoiding host volume mounts, your containerized site runs identically in development and production.</p>
+        </div>
+      </section>
+
+      <section id="ports">
+        <h2>Port Configuration</h2>
+        <p>By default, host ports <code>80</code> and <code>443</code> are published. If you encounter port conflicts, you can edit <code>docker-compose.yaml</code> to map alternative host ports:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">docker-compose.yaml</span>
+            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+          </div>
+          <pre><code>ports:
+  - "8080:80"
+  - "8443:443"</code></pre>
+        </div>
+      </section>
+
+      <section id="local-ssl">
+        <h2>Enabling Local SSL</h2>
+        <p>To enable HTTPS for local development:</p>
+        <ol>
+          <li>Generate a self-signed certificate into <code>docker/nginx/certs/</code>.</li>
+          <li>Uncomment the SSL server and redirect blocks in <code>docker/nginx/nginx.conf</code>.</li>
+          <li>Comment out the standalone HTTP server block.</li>
+          <li>Rebuild: <code>docker compose up -d --build</code>.</li>
+        </ol>
+        <div class="callout callout--warn">
+          <div class="callout-header">Private Key Security</div>
+          <p>Certificates are built into the image. Never push images with private keys to public registries.</p>
+        </div>
+      </section>
+
+      <section id="testing">
+        <h2>Testing &amp; Verification</h2>
+        <p>Run the automated test suite to verify configuration, endpoint responses, and optional SSL:</p>
+        <div class="code-card">
+          <div class="code-header">
+            <span class="code-title">Terminal</span>
+            <button type="button" class="copy-btn" aria-label="Copy code to clipboard">Copy</button>
+          </div>
+          <pre><code># Run HTTP smoke tests
+./tests/smoke.sh
+
+# Run SSL smoke tests
+SMOKE_SSL=1 ./tests/smoke.sh</code></pre>
+        </div>
+      </section>
+
+      <section id="troubleshooting">
+        <h2>Troubleshooting</h2>
+        <p>Common operational issues and how to resolve them:</p>
+        <ul>
+          <li><strong>Port 80/443 already allocated:</strong> Check existing services with <code>docker ps</code> or <code>lsof -i :80</code>.</li>
+          <li><strong>Nginx syntax errors:</strong> Run <code>docker compose exec web nginx -t</code> to validate your configuration.</li>
+          <li><strong>View container logs:</strong> Run <code>docker compose logs -f web</code>.</li>
+        </ul>
+      </section>
+
+      <nav class="docs-nav-pager" aria-label="Page navigation">
+        <a href="/" class="btn btn-secondary">← Back to Home</a>
+        <a href="/deploy.html" class="btn btn-primary">Deploy to VPS →</a>
+      </nav>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-content">
+      <p>&copy; <span class="current-year">2026</span> docker-compose-html. Released under the MIT License.</p>
+      <p>
+        <a href="https://github.com/hydrokat/docker-compose-html" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+        &middot;
+        <a href="/usage.html">Usage Guide</a>
+        &middot;
+        <a href="/deploy.html">VPS Deployment</a>
+      </p>
+    </div>
+  </footer>
+
+  <script type="module" src="/assets/js/main.js"></script>
+</body>
+</html>

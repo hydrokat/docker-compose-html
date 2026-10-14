@@ -53,6 +53,35 @@ if ! echo "$INDEX_RESPONSE" | grep -q "docker-compose-html"; then
   exit 1
 fi
 
+echo "==> Testing website multi-page endpoints"
+curl -fsS http://localhost/usage.html >/dev/null
+curl -fsS http://localhost/deploy.html >/dev/null
+
+echo "==> Testing asset serving and MIME types"
+CSS_HEADERS="$(curl -sI http://localhost/assets/css/styles.css)"
+if ! echo "$CSS_HEADERS" | grep -i "^content-type:" | grep -qi "text/css"; then
+  echo "FAIL: Expected text/css content-type for styles.css"
+  exit 1
+fi
+
+if ! echo "$CSS_HEADERS" | grep -i "^cache-control:" | grep -qi "max-age"; then
+  echo "FAIL: Expected Cache-Control header for static assets"
+  exit 1
+fi
+
+JS_HEADERS="$(curl -sI http://localhost/assets/js/main.js)"
+if ! echo "$JS_HEADERS" | grep -i "^content-type:" | grep -Eqi "(application|text)/javascript"; then
+  echo "FAIL: Expected javascript content-type for main.js"
+  exit 1
+fi
+
+echo "==> Testing Content-Security-Policy header"
+INDEX_HEADERS="$(curl -sI http://localhost/)"
+if ! echo "$INDEX_HEADERS" | grep -i "^content-security-policy:" | grep -qi "default-src 'self'"; then
+  echo "FAIL: Expected Content-Security-Policy header not found"
+  exit 1
+fi
+
 echo "==> Testing 404 handling"
 HTTP_STATUS="$(curl -s -o /dev/null -w "%{http_code}" http://localhost/non-existent-page-test-404 || true)"
 if [[ "$HTTP_STATUS" != "404" ]]; then
